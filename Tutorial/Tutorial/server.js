@@ -1,16 +1,20 @@
 ﻿var http = require('http');
 var url = require('url');
 
-function start (route) {
+function start (route, handlers) {
 	function onRequest(request, response) {
+		var postData = '';
 		var pathname = url.parse(request.url).pathname;
 		console.log('Request for ' + pathname + ' received!');
 		
-		route(pathname);
-
-		response.writeHead(200, { 'ConetentType' : 'text/plain' });
-		response.write('Hello world!');
-		response.end();
+		request.on('data', function (postDataChunk) {
+			postData += postDataChunk;
+			console.log('Received post data chunk "' + postDataChunk + '".');
+		});
+		
+		request.on('end', function () {
+			route(handlers, pathname, response, postData);
+		});
 	}
 
 	http.createServer(onRequest).listen(9999);
